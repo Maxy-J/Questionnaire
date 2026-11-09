@@ -23,13 +23,24 @@ function App() {
       title: "My own survey",
       date: "October 28, 2026"
     },
-
+    
   ]);
-
+  const [newSurveyTitle, setNewSurveyTitle] = useState("");
+  
   return (
-    <div>
-      <h1>Questionnaire</h1>
+    <div className="app">
+      <h1>Questionnaire?!</h1>
       <p>Welcome to your survey platform!</p>
+      <input
+        type="text"
+        placeholder="Enter survey title"
+        value={newSurveyTitle}
+        onChange={(event) => setNewSurveyTitle(event.target.value)}
+      />
+      
+      <button onClick={createSurvey}>
+        Create Survey
+      </button>
 
       {surveys.map((survey) => (
         <SurveyCard
@@ -45,22 +56,49 @@ function App() {
       ))}
     </div>
   );
+  function createSurvey() {
+    let unnamedNumber = 1;
+
+    while (surveys.some((survey) =>
+        survey.title === `Unnamed Survey ${unnamedNumber}`
+    )) {
+        unnamedNumber++;
+      }
+
+    const title = newSurveyTitle.trim() || `Unnamed Survey ${unnamedNumber}`;
+    
+  
+    const newSurvey ={ 
+      id: Date.now(),
+      title: title,
+      date: "november 9, 2026"
+    };
+    setSurveys([...surveys, newSurvey]); 
+    
+    setNewSurveyTitle("");
+  }
 }
 
 
 function SurveyCard(props){
   return (
-    <div>
+    <div className="survey-card">
       <h2>{props.title}</h2>
       <p>Last modified: {props.date}</p>
       <button>Open Survey</button>
 
-      <button onClick={props.deleteSurvey}>
+      <button onClick ={()=> {
+        if(window.confirm("Are you sure you want to delete this survey?")) {
+          props.deleteSurvey();
+        }
+      }}>
         Delete
       </button>
     </div>
   );
 }
+
+
 
 export default App;
 

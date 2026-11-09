@@ -182,3 +182,28 @@
     border-right-color: var(--border);
   }
 }
+
+.app {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.survey-card {
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 20px;
+  margin-top: 15px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+}
+
+.survey-card h2 {
+  margin-top: 0;
+  color: #07a102;
+}
+
+.survey-card p {
+  color: #179b02;
+}
