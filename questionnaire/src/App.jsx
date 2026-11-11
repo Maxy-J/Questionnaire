@@ -26,34 +26,52 @@ function App() {
     
   ]);
   const [newSurveyTitle, setNewSurveyTitle] = useState("");
-  
+  const [selectedSurvey, setSelectedSurvey] = useState(null);
   return (
     <div className="app">
-      <h1>Questionnaire?!</h1>
-      <p>Welcome to your survey platform!</p>
+    {/* this might be temporary depending on how are approiach goes with the survey builder screen */}
+      {selectedSurvey ? (
+  <div className="build-page">
+    <button onClick={() => setSelectedSurvey(null)}>
+      Back to Survey Library
+    </button>
+
+    <h1>{selectedSurvey.title}</h1>
+    <p>Last modified: {selectedSurvey.date}</p>
+
+    <h2>Survey Builder</h2>
+    <p>Your survey editing workspace will go here.</p>
+  </div>
+) : (
+  <>
+    <h1>Questionnaire?!</h1>
+    <p>Welcome to your survey platform!</p>
+    <div className="create-survey">
       <input
         type="text"
         placeholder="Enter survey title"
         value={newSurveyTitle}
         onChange={(event) => setNewSurveyTitle(event.target.value)}
       />
-      
-      <button onClick={createSurvey}>
-        Create Survey
-      </button>
-
-      {surveys.map((survey) => (
-        <SurveyCard
-          key={survey.id}
-          title={survey.title}
-          date={survey.date}
-          deleteSurvey={() =>{
-            setSurveys(surveys.filter((item) => item.id !== survey.id))
-          }
-
-          }
-        />
-      ))}
+      <button onClick={createSurvey}>Create Survey</button>
+    </div>
+    <div className="survey-list">
+      <div className="survey-grid">
+        {surveys.map((survey) => (
+          <SurveyCard
+            key={survey.id}
+            title={survey.title}
+            date={survey.date}
+            deleteSurvey={() => {
+              setSurveys(surveys.filter((item) => item.id !== survey.id))
+            }}
+            openSurvey={() => setSelectedSurvey(survey)}
+          />
+        ))}
+      </div>
+    </div>
+  </>
+)}
     </div>
   );
   function createSurvey() {
@@ -85,9 +103,9 @@ function SurveyCard(props){
     <div className="survey-card">
       <h2>{props.title}</h2>
       <p>Last modified: {props.date}</p>
-      <button>Open Survey</button>
-
-      <button onClick ={()=> {
+      <button className="open-button" onClick={props.openSurvey}>Open Survey</button>
+    {/* <button>Edit</button> */}
+      <button className="delete-button" onClick ={()=> {
         if(window.confirm("Are you sure you want to delete this survey?")) {
           props.deleteSurvey();
         }
@@ -101,5 +119,4 @@ function SurveyCard(props){
 
 
 export default App;
-
 
