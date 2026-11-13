@@ -27,6 +27,10 @@ function App() {
   ]);
   const [newSurveyTitle, setNewSurveyTitle] = useState("");
   const [selectedSurvey, setSelectedSurvey] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const filteredSurveys = surveys.filter((survey) =>
+  survey.title.toLowerCase().includes(searchTerm.toLowerCase())
+);
   return (
     <div className="app">
     {/* this might be temporary depending on how are approiach goes with the survey builder screen */}
@@ -57,8 +61,16 @@ function App() {
       <button onClick={createSurvey}>Create Survey</button>
     </div>
     <div className="survey-list">
+      <div className="search-surveys">
+        <input
+          type="text"
+          placeholder="Search your surveys..."
+          value={searchTerm}
+          onChange={(event) => setSearchTerm(event.target.value)}
+        />
+      </div>
       <div className="survey-grid">
-        {surveys.map((survey) => (
+        {filteredSurveys.map((survey) => (
           <SurveyCard
             key={survey.id}
             title={survey.title}
@@ -93,7 +105,7 @@ function App() {
       date: "november 9, 2026"
     };
     setSurveys([...surveys, newSurvey]); 
-    
+    setSelectedSurvey(newSurvey);
     setNewSurveyTitle("");
   }
 }
