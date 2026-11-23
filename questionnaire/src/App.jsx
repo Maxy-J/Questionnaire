@@ -29,10 +29,15 @@ const EXAMPLE_SURVEYS = [
   },
 ]
 
+function getErrorMessage(error) {
+  return error instanceof Error ? error.message : String(error)
+}
+
 function App() {
   const [surveys, setSurveys] = useState(EXAMPLE_SURVEYS)
   const [newSurveyTitle, setNewSurveyTitle] = useState('')
   const [selectedSurvey, setSelectedSurvey] = useState(null)
+  const [searchTerm, setSearchTerm] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isCreating, setIsCreating] = useState(false)
@@ -41,31 +46,31 @@ function App() {
     let isActive = true
 
     async function loadSurveys() {
-      const { data, error: loadError } = await supabase
-        .from('polls')
-        .select('id, title, created_at, poll_date')
-        .order('created_at', { ascending: false })
+      try {
+        const { data, error: loadError } = await supabase
+          .from('polls')
+          .select('id, title, created_at, poll_date')
+          .order('created_at', { ascending: false })
 
-      if (!isActive) return
+        if (loadError) throw loadError
+        if (!isActive) return
 
-      if (loadError) {
-        setError(loadError.message)
-        setIsLoading(false)
-        return
+        setSurveys([
+          ...(data ?? []).map((poll) => ({
+            id: poll.id,
+            title: poll.title,
+            date:
+              poll.poll_date ??
+              new Date(poll.created_at).toLocaleDateString(),
+            isExample: false,
+          })),
+          ...EXAMPLE_SURVEYS,
+        ])
+      } catch (loadError) {
+        if (isActive) setError(getErrorMessage(loadError))
+      } finally {
+        if (isActive) setIsLoading(false)
       }
-
-      setSurveys([
-        ...data.map((poll) => ({
-          id: poll.id,
-          title: poll.title,
-          date:
-            poll.poll_date ??
-            new Date(poll.created_at).toLocaleDateString(),
-          isExample: false,
-        })),
-        ...EXAMPLE_SURVEYS,
-      ])
-      setIsLoading(false)
     }
 
     loadSurveys()
@@ -80,7 +85,6 @@ function App() {
     setError('')
 
     let unnamedNumber = 1
-
     while (
       surveys.some(
         (survey) => survey.title === `Unnamed Survey ${unnamedNumber}`
@@ -99,49 +103,49 @@ function App() {
         .select('id, title, created_at, poll_date')
         .single()
 
-      if (insertError) {
-        setError(insertError.message)
-        return
+      if (insertError) throw insertError
+
+      const createdSurvey = {
+        id: data.id,
+        title: data.title,
+        date:
+          data.poll_date ?? new Date(data.created_at).toLocaleDateString(),
+        isExample: false,
       }
 
-      setSurveys((currentSurveys) => [
-        {
-          id: data.id,
-          title: data.title,
-          date:
-            data.poll_date ??
-            new Date(data.created_at).toLocaleDateString(),
-        },
-        ...currentSurveys,
-      ])
+      setSurveys((currentSurveys) => [createdSurvey, ...currentSurveys])
       setNewSurveyTitle('')
+      setSelectedSurvey(createdSurvey)
     } catch (requestError) {
-      setError(
-        requestError instanceof Error
-          ? requestError.message
-          : String(requestError)
-      )
+      setError(getErrorMessage(requestError))
     } finally {
       setIsCreating(false)
     }
   }
 
   async function deleteSurvey(id) {
-    const { error: deleteError } = await supabase
-      .from('polls')
-      .delete()
-      .eq('id', id)
-
-    if (deleteError) {
-      setError(deleteError.message)
-      return
-    }
-
     setError('')
-    setSurveys((currentSurveys) =>
-      currentSurveys.filter((survey) => survey.id !== id)
-    )
+
+    try {
+      const { error: deleteError } = await supabase
+        .from('polls')
+        .delete()
+        .eq('id', id)
+
+      if (deleteError) throw deleteError
+
+      setSurveys((currentSurveys) =>
+        currentSurveys.filter((survey) => survey.id !== id)
+      )
+    } catch (deleteError) {
+      setError(getErrorMessage(deleteError))
+    }
   }
+
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase()
+  const filteredSurveys = surveys.filter((survey) =>
+    survey.title.toLowerCase().includes(normalizedSearchTerm)
+  )
 
   return (
     <div className="app">
@@ -188,11 +192,20 @@ function App() {
           </div>
 
           {error && <p role="alert">{error}</p>}
-
           {isLoading && <p>Loading saved polls...</p>}
+
           <div className="survey-list">
+            <div className="search-surveys">
+              <input
+                type="search"
+                aria-label="Search surveys"
+                placeholder="Search your surveys..."
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+              />
+            </div>
             <div className="survey-grid">
-              {surveys.map((survey) => (
+              {filteredSurveys.map((survey) => (
                 <SurveyCard
                   key={survey.id}
                   title={survey.title}
@@ -203,6 +216,9 @@ function App() {
                 />
               ))}
             </div>
+            {!isLoading && filteredSurveys.length === 0 && (
+              <p>No surveys match your search.</p>
+            )}
           </div>
         </>
       )}
